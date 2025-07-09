@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Open IT Helpdesk Tickets</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #dcdcdc;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    h1 {
+      color: white;
+    }
+
+    .ticket {
+      background-color: #1e1e1e;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 10px 0;
+    }
+
+    .high { border-left: 6px solid red; }
+    .medium { border-left: 6px solid orange; }
+    .low { border-left: 6px solid green; }
+    .update { border-left: 6px solid yellow; }
+    .complete { border-left: 6px solid lime; text-decoration: line-through; }
+
+    .buttons {
+      margin-top: 10px;
+    }
+
+    button {
+      margin-right: 8px;
+      padding: 4px 8px;
+      background-color: #333;
+      color: white;
+      border: 1px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #555;
+    }
+
+    #new-ticket-input {
+      width: 70%;
+      padding: 6px;
+      margin-right: 8px;
+    }
+
+    #add-ticket {
+      padding: 6px 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🛠️ Open IT Helpdesk Tickets</h1>
+
+  <div>
+    <input type="text" id="new-ticket-input" placeholder="Describe the issue..." />
+    <button id="add-ticket">Add Ticket</button>
+  </div>
+
+  <div id="tickets"></div>
+
+  <script>
+    const ticketsEl = document.getElementById('tickets');
+    const inputEl = document.getElementById('new-ticket-input');
+    const addBtn = document.getElementById('add-ticket');
+
+    let tickets = JSON.parse(localStorage.getItem('tickets')) || [];
+
+    function saveTickets() {
+      localStorage.setItem('tickets', JSON.stringify(tickets));
+    }
+
+    function renderTickets() {
+      ticketsEl.innerHTML = '';
+      tickets.forEach((ticket, index) => {
+        const div = document.createElement('div');
+        div.className = `ticket ${ticket.status}`;
+        div.innerHTML = `
+          <strong>${getStatusEmoji(ticket.status)} ${ticket.text}</strong>
+          <div class="buttons">
+            ${ticket.status !== 'complete' ? `
+              <button onclick="changeStatus(${index})">Change Priority</button>
+              <button onclick="markComplete(${index})">Mark Complete</button>
+              <button onclick="markNeedsUpdate(${index})">Needs Update</button>
+            ` : `
+              <button onclick="reopenTicket(${index})">Reopen</button>
+            `}
+          </div>
+        `;
+        ticketsEl.appendChild(div);
+      });
+    }
+
+    function getStatusEmoji(status) {
+      switch (status) {
+        case 'high': return '🔥 High Priority';
+        case 'medium': return '⚠️ Medium Priority';
+        case 'low': return '🟢 Low Priority';
+        case 'update': return '🕒 Needs Update';
+        case 'complete': return '✅ Complete';
+        default: return '';
+      }
+    }
+
+    function addTicket() {
+      const text = inputEl.value.trim();
+      if (!text) return;
+      tickets.push({ text, status: 'high' });
+      inputEl.value = '';
+      saveTickets();
+      renderTickets();
+    }
+
+    function changeStatus(index) {
+      const order = ['high', 'medium', 'low'];
+      let current = tickets[index].status;
+      let next = order[(order.indexOf(current) + 1) % order.length];
+      tickets[index].status = next;
+      saveTickets();
+      renderTickets();
+    }
+
+    function markNeedsUpdate(index) {
+      tickets[index].status = 'update';
+      saveTickets();
+      renderTickets();
+    }
+
+    function markComplete(index) {
+      tickets[index].status = 'complete';
+      saveTickets();
+      renderTickets();
+    }
+
+    function reopenTicket(index) {
+      tickets[index].status = 'high';
+      saveTickets();
+      renderTickets();
+    }
+
+    addBtn.onclick = addTicket;
+    renderTickets();
+  </script>
+
+</body>
+</html>
